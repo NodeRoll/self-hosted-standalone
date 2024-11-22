@@ -6,7 +6,6 @@
 
 [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://noderoll.com)
 
 </div>
 
