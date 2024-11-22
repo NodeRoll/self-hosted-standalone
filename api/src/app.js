@@ -3,6 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const routes = require('./routes');
 const authRoutes = require('./routes/auth');
+const deploymentRoutes = require('./routes/deployment');
 const { authenticate } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 
 // Protected routes
 app.use('/api', authenticate, routes);
+app.use('/api/deployments', deploymentRoutes);
 
 // Error handling
 app.use(errorHandler);

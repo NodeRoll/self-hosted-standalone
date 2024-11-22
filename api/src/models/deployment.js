@@ -215,4 +215,44 @@ const Deployment = sequelize.define('Deployment', {
     ]
 });
 
+// Auto-scaling related methods
+Deployment.prototype.getScalingRule = async function() {
+    return this.config?.scaling || null;
+}
+
+Deployment.prototype.setScalingRule = async function(rule) {
+    this.config = {
+        ...this.config,
+        scaling: rule
+    };
+    await this.save();
+}
+
+Deployment.prototype.removeScalingRule = async function() {
+    if (this.config?.scaling) {
+        delete this.config.scaling;
+        await this.save();
+    }
+}
+
+Deployment.prototype.getPreviousSuccessful = async function() {
+    return await Deployment.findOne({
+        where: {
+            projectName: this.projectName,
+            status: 'success',
+            id: { [sequelize.Op.lt]: this.id }
+        },
+        order: [['id', 'DESC']]
+    });
+}
+
+Deployment.prototype.createRollback = async function(previousDeployment) {
+    return await Deployment.create({
+        projectName: this.projectName,
+        config: previousDeployment.config,
+        rollbackFromId: previousDeployment.id,
+        status: 'pending'
+    });
+}
+
 module.exports = Deployment;
