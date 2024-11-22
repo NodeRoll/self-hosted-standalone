@@ -1,154 +1,182 @@
 const express = require('express');
 const router = express.Router();
 const deploymentService = require('../services/deploymentService');
-const { body, param, query } = require('express-validator');
-const validateRequest = require('../middleware/validateRequest');
+const autoScalingService = require('../services/autoScalingService');
+const { auth, requireAdmin } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 // Create new deployment
-router.post('/',
-    [
-        body('projectName').notEmpty().trim(),
-        body('environment').optional().isObject(),
-        body('config').optional().isObject(),
-        body('resources').optional().isObject(),
-        body('version').optional().isString()
-    ],
-    validateRequest,
-    async (req, res, next) => {
-        try {
-            const deployment = await deploymentService.createDeployment(
-                req.body.projectName,
-                {
-                    version: req.body.version,
-                    environment: req.body.environment,
-                    config: req.body.config,
-                    resources: req.body.resources,
-                    deployedBy: req.user?.id
-                }
-            );
-            res.status(201).json(deployment);
-        } catch (error) {
-            next(error);
-        }
-    }
-);
-
-// Get deployment by ID
-router.get('/:id',
-    [param('id').isUUID()],
-    validateRequest,
-    async (req, res, next) => {
-        try {
-            const deployment = await deploymentService.getDeployment(req.params.id);
-            res.json(deployment);
-        } catch (error) {
-            next(error);
-        }
-    }
-);
-
-// Get deployment history
-router.get('/project/:projectName/history',
-    [
-        param('projectName').notEmpty().trim(),
-        query('limit').optional().isInt({ min: 1, max: 100 })
-    ],
-    validateRequest,
-    async (req, res, next) => {
-        try {
-            const history = await deploymentService.getDeploymentHistory(
-                req.params.projectName,
-                req.query.limit
-            );
-            res.json(history);
-        } catch (error) {
-            next(error);
-        }
-    }
-);
-
-// Rollback deployment
-router.post('/rollback',
-    [
-        body('projectName').notEmpty().trim(),
-        body('version').notEmpty().trim()
-    ],
-    validateRequest,
-    async (req, res, next) => {
-        try {
-            const deployment = await deploymentService.rollback(
-                req.body.projectName,
-                req.body.version
-            );
-            res.status(201).json(deployment);
-        } catch (error) {
-            next(error);
-        }
-    }
-);
-
-// Stop deployment
-router.post('/:id/stop',
-    [param('id').isUUID()],
-    validateRequest,
-    async (req, res, next) => {
-        try {
-            const deployment = await deploymentService.stopDeployment(req.params.id);
-            res.json(deployment);
-        } catch (error) {
-            next(error);
-        }
-    }
-);
-
-// Get deployment logs
-router.get('/:id/logs',
-    [
-        param('id').isUUID(),
-        query('tail').optional().isInt({ min: 1, max: 1000 })
-    ],
-    validateRequest,
-    async (req, res, next) => {
-        try {
-            const deployment = await deploymentService.getDeployment(req.params.id);
-            if (!deployment.containerId) {
-                throw new Error('No active container for this deployment');
+router.post('/', auth, async (req, res, next) => {
+    try {
+        const deployment = await deploymentService.createDeployment(
+            req.body.projectName,
+            {
+                ...req.body,
+                deployedBy: req.user.id
             }
-
-            const logs = await dockerService.getContainerLogs(deployment.containerId, {
-                tail: req.query.tail || 100
-            });
-            res.send(logs);
-        } catch (error) {
-            next(error);
-        }
+        );
+        res.status(201).json(deployment);
+    } catch (error) {
+        next(error);
     }
-);
+});
+
+// Get deployment status with metrics
+router.get('/:id/status', auth, async (req, res, next) => {
+    try {
+        const status = await deploymentService.getDeploymentStatus(req.params.id);
+        res.json(status);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get deployment metrics history
+router.get('/:id/metrics', auth, async (req, res, next) => {
+    try {
+        const metrics = await deploymentService.getDeploymentMetrics(
+            req.params.id,
+            req.query.from,
+            req.query.to
+        );
+        res.json(metrics);
+    } catch (error) {
+        next(error);
+    }
+});
 
 // Scale deployment
-router.post('/:id/scale', [
-    param('id').isUUID().withMessage('Invalid deployment ID'),
-    body('replicas').isInt({ min: 0 }).withMessage('Replicas must be a non-negative integer')
-], async (req, res) => {
+router.post('/:id/scale', auth, async (req, res, next) => {
     try {
-        // Validate request
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+        const { replicas } = req.body;
+        if (!replicas || replicas < 1) {
+            return res.status(400).json({ error: 'Invalid replicas count' });
         }
 
-        const deploymentId = req.params.id;
-        const { replicas } = req.body;
-
-        // Scale the deployment
-        const deployment = await deploymentService.scaleDeployment(deploymentId, replicas);
-
+        const deployment = await deploymentService.scaleDeployment(
+            req.params.id,
+            replicas
+        );
         res.json(deployment);
     } catch (error) {
-        console.error('Error scaling deployment:', error);
-        res.status(500).json({
-            message: error.message || 'Failed to scale deployment'
+        next(error);
+    }
+});
+
+// Stop deployment
+router.post('/:id/stop', auth, async (req, res, next) => {
+    try {
+        const deployment = await deploymentService.stopDeployment(req.params.id);
+        res.json(deployment);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Restart deployment
+router.post('/:id/restart', auth, async (req, res, next) => {
+    try {
+        const deployment = await deploymentService.restartDeployment(req.params.id);
+        res.json(deployment);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Rollback deployment
+router.post('/:id/rollback', auth, async (req, res, next) => {
+    try {
+        const deployment = await deploymentService.rollbackDeployment(
+            req.params.id,
+            req.body.version
+        );
+        res.json(deployment);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get deployment logs
+router.get('/:id/logs', auth, async (req, res, next) => {
+    try {
+        const logs = await deploymentService.getDeploymentLogs(
+            req.params.id,
+            req.query.since,
+            req.query.tail
+        );
+        res.json(logs);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// List deployments
+router.get('/', auth, async (req, res, next) => {
+    try {
+        const deployments = await deploymentService.listDeployments(
+            req.query.projectName,
+            req.query.status,
+            req.query.page,
+            req.query.limit
+        );
+        res.json(deployments);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get deployment by ID
+router.get('/:id', auth, async (req, res, next) => {
+    try {
+        const deployment = await deploymentService.getDeployment(req.params.id);
+        if (!deployment) {
+            return res.status(404).json({ error: 'Deployment not found' });
+        }
+        res.json(deployment);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get auto-scaling rules
+router.get('/:id/scaling-rules', auth, async (req, res, next) => {
+    try {
+        const rules = await autoScalingService.getScalingRules(req.params.id);
+        if (!rules) {
+            return res.status(404).json({ message: 'No scaling rules found for this deployment' });
+        }
+        res.json(rules);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Set auto-scaling rules
+router.post('/:id/scaling-rules', auth, async (req, res, next) => {
+    try {
+        const { minInstances, maxInstances, metrics, cooldownPeriod } = req.body;
+        
+        // Set scaling rules
+        await autoScalingService.setScalingRules(req.params.id, {
+            minInstances,
+            maxInstances,
+            metrics,
+            cooldownPeriod
         });
+        
+        res.json({ message: 'Auto-scaling rules updated successfully' });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Delete auto-scaling rules
+router.delete('/:id/scaling-rules', auth, async (req, res, next) => {
+    try {
+        await autoScalingService.removeScalingRules(req.params.id);
+        res.json({ message: 'Auto-scaling rules removed successfully' });
+    } catch (error) {
+        next(error);
     }
 });
 

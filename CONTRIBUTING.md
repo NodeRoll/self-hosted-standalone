@@ -21,7 +21,8 @@ We use GitHub to host code, to track issues and feature requests, as well as acc
 
 1. Update the README.md with details of changes to the interface, if applicable.
 2. Update the CHANGELOG.md with a note describing your changes.
-3. The PR will be merged once you have the sign-off of two other developers.
+3. Update the ROADMAP.md if you've implemented planned features.
+4. The PR will be merged once you have the sign-off of two other developers.
 
 ## Any contributions you make will be under the MIT Software License 📝
 In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
@@ -60,6 +61,17 @@ cp .env.example .env
 npm run dev
 ```
 
+### Environment Variables 🔑
+
+Required environment variables:
+
+```env
+NODE_ENV=development
+PORT=3000
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+```
+
 ### Commit Messages 📝
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
@@ -81,6 +93,7 @@ Example: `feat: add user authentication system`
 - Use meaningful variable names
 - Comment your code when necessary
 - Keep functions small and focused
+- Use TypeScript types and interfaces where possible
 
 ## Testing 🧪
 
@@ -88,6 +101,7 @@ Example: `feat: add user authentication system`
 - Ensure all tests pass before submitting PR
 - Include integration tests when necessary
 - Test edge cases
+- Add monitoring tests for new metrics
 
 ```bash
 # Run tests
@@ -95,6 +109,9 @@ npm test
 
 # Run tests with coverage
 npm run test:coverage
+
+# Run specific test suite
+npm test -- --grep "MonitoringService"
 ```
 
 ## Documentation 📚
@@ -103,6 +120,17 @@ npm run test:coverage
 - Use JSDoc for code documentation
 - Keep README.md updated
 - Add examples when helpful
+- Document monitoring metrics and scaling rules
+
+## Working with Monitoring & Scaling 📊
+
+When contributing to monitoring and auto-scaling features:
+
+1. Follow the metric collection pattern
+2. Document scaling rule format
+3. Add appropriate error handling
+4. Include cooldown logic
+5. Test with various scenarios
 
 ## Questions? 💭
 

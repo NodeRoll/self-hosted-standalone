@@ -30,11 +30,13 @@
 - 🌍 Custom domain support
 - 🎯 Wildcard subdomains
 
-### 📊 Monitoring & Management
-- 📈 Real-time metrics
-- 📝 Smart logging
-- 🔔 Notifications
+### 📊 Smart Monitoring & Scaling
+- 📈 Real-time system metrics
+- 🔄 Intelligent auto-scaling
+- 🐙 GitHub activity monitoring
+- 📊 Traffic-based scaling
 - 💓 Health checks
+- 📝 Smart logging
 
 ### 🎨 Beautiful UI
 - 🎯 Clean, focused interface
@@ -63,6 +65,7 @@ npm run dev
 - Node.js v14 or higher
 - 512MB RAM minimum (1GB recommended)
 - 1GB free disk space
+- GitHub account for repository integration
 
 ## 📚 Documentation
 
@@ -90,15 +93,32 @@ npm run dev
 
 </div>
 
-## 🌟 Why SQLite?
+## 🌟 Why NodeRoll?
 
-NodeRoll uses SQLite as its database because:
+### 📦 Simple Yet Powerful
+- Zero-config deployment
+- Intelligent auto-scaling
+- GitHub-aware monitoring
+- Built-in SSL & domains
 
-- 📦 Zero-config: No separate database server needed
-- 🚀 Lightweight: Perfect for small to medium deployments
-- 💾 Single file: Easy backups and maintenance
-- 🔒 Reliable: ACID compliant, battle-tested
-- 🎯 Simple: No complex database administration
+### 🚀 Developer Experience
+- Clean, intuitive interface
+- Real-time deployment feedback
+- Smart dependency handling
+- Automated health checks
+
+### 📊 Smart Scaling
+- System metrics-based scaling
+- GitHub activity monitoring
+- Traffic-based auto-scaling
+- Custom scaling rules
+- Cooldown periods
+
+### 🔒 Security First
+- Secure GitHub OAuth
+- Automatic SSL
+- Environment isolation
+- Access control
 
 ## 📝 License
 

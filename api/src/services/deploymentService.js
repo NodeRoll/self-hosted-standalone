@@ -1,4 +1,5 @@
 const dockerService = require('./dockerService');
+const monitoringService = require('./monitoringService');
 const Deployment = require('../models/deployment');
 const logger = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
@@ -6,6 +7,12 @@ const path = require('path');
 const fs = require('fs').promises;
 
 class DeploymentService {
+    constructor() {
+        // Listen for monitoring events
+        monitoringService.on('health_alert', this._handleHealthAlert.bind(this));
+        monitoringService.on('metrics', this._handleMetricsUpdate.bind(this));
+    }
+
     async createDeployment(projectName, options) {
         const version = options.version || this._generateVersion();
         
@@ -78,6 +85,9 @@ class DeploymentService {
             if (!deployment) {
                 throw new Error(`Deployment ${deploymentId} not found`);
             }
+
+            // Stop monitoring
+            await monitoringService.stopMonitoring(deploymentId);
 
             if (deployment.containerId) {
                 await dockerService.stopContainer(deployment.containerId);
@@ -202,23 +212,56 @@ class DeploymentService {
 
     async _processDeployment(deployment) {
         try {
-            // Build Docker image
-            await dockerService.buildImage(
-                path.join(process.cwd(), 'projects', deployment.projectName),
-                `${deployment.projectName}:${deployment.version}`
-            );
+            await this._updateDeploymentStatus(deployment.id, 'deploying');
 
-            // Create and start container
-            const container = await dockerService.createContainer(deployment);
+            // Create container
+            const container = await this.createDeploymentContainer(deployment);
+            
+            // Start container
+            await dockerService.startContainer(container.id);
+            
+            // Start monitoring
+            await monitoringService.startMonitoring(deployment.id, container.id);
+
             await this._updateDeploymentStatus(deployment.id, 'running', {
                 containerId: container.id
             });
 
-            await dockerService.startContainer(container.id);
-
-            logger.info(`Deployment ${deployment.projectName}:${deployment.version} is running`);
+            logger.info(`Deployment successful for ${deployment.projectName}:${deployment.version}`);
         } catch (error) {
-            logger.error('Error processing deployment:', error);
+            logger.error(`Deployment failed for ${deployment.projectName}:${deployment.version}`, error);
+            await this._updateDeploymentStatus(deployment.id, 'failed', {
+                error: error.message
+            });
+            throw error;
+        }
+    }
+
+    async getDeploymentStatus(deploymentId) {
+        try {
+            const deployment = await Deployment.findByPk(deploymentId);
+            if (!deployment) {
+                throw new Error(`Deployment ${deploymentId} not found`);
+            }
+
+            if (deployment.status !== 'running' || !deployment.containerId) {
+                return {
+                    status: deployment.status,
+                    error: deployment.error
+                };
+            }
+
+            const status = await monitoringService.getStatus(deploymentId);
+            const metrics = await monitoringService.getMetrics(deploymentId);
+
+            return {
+                status: deployment.status,
+                containerStatus: status,
+                metrics,
+                error: deployment.error
+            };
+        } catch (error) {
+            logger.error(`Error getting deployment status for ${deploymentId}:`, error);
             throw error;
         }
     }
@@ -232,6 +275,32 @@ class DeploymentService {
         } catch (error) {
             logger.error('Error updating deployment status:', error);
             throw error;
+        }
+    }
+
+    async _handleHealthAlert(alert) {
+        const { deploymentId, status } = alert;
+        logger.warn(`Health alert for deployment ${deploymentId}:`, status);
+
+        // Update deployment status
+        await this._updateDeploymentStatus(deploymentId, 'unhealthy', {
+            healthStatus: status
+        });
+
+        // TODO: Implement auto-recovery logic here
+    }
+
+    async _handleMetricsUpdate(update) {
+        const { deploymentId, metrics } = update;
+        
+        try {
+            const deployment = await Deployment.findByPk(deploymentId);
+            if (deployment) {
+                deployment.lastMetrics = metrics;
+                await deployment.save();
+            }
+        } catch (error) {
+            logger.error(`Error updating metrics for ${deploymentId}:`, error);
         }
     }
 

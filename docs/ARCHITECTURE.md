@@ -29,7 +29,8 @@ The brain of NodeRoll, orchestrating all operations.
 - 🔐 GitHub OAuth integration
 - 📦 Repository management
 - 🚀 Deployment coordination
-- 📊 System monitoring
+- 📊 Advanced monitoring
+- 🔄 Intelligent auto-scaling
 - ⚡ Real-time updates
 
 #### Technologies
@@ -37,12 +38,28 @@ The brain of NodeRoll, orchestrating all operations.
 - 💾 SQLite with Sequelize
 - 🔑 JWT auth
 - 🔌 WebSocket
+- 🐙 GitHub API integration
+
+#### Services
+- 📊 MonitoringService
+  - System metrics collection
+  - GitHub activity tracking
+  - Health checks
+- 🔄 AutoScalingService
+  - Rule-based scaling
+  - Activity-based scaling
+  - Cooldown management
+- 🚀 DeploymentService
+  - Process management
+  - Configuration handling
+  - State management
 
 #### Data Storage
 - 📁 Single SQLite file
 - 🔄 Automatic backups
 - 🔒 File-based security
 - ⚡ Fast operations
+- 📊 Metrics history
 
 ### 2. 🎨 UI Server
 Beautiful and intuitive interface for developers.
@@ -52,12 +69,14 @@ Beautiful and intuitive interface for developers.
 - ⚡ Real-time updates
 - 🌓 Dark/Light modes
 - 📱 Responsive layout
+- 📊 Advanced metrics visualization
 
 #### Technologies
 - ⚛️ React
 - 🎨 Tailwind CSS
 - 🔌 WebSocket client
 - 📊 Chart.js
+- 📈 D3.js for complex metrics
 
 ### 3. 🛠️ System Agent
 Powerful system-level operations manager.
@@ -67,45 +86,59 @@ Powerful system-level operations manager.
 - 🔄 Nginx configuration
 - 🔒 SSL management
 - 📊 Metrics collection
+- 🔄 Container orchestration
 
-## 🔄 Data Flow
+## 🔄 System Flows
 
-### Deployment Process
+### Deployment & Scaling Flow
 ```mermaid
 sequenceDiagram
     participant 👤 User
     participant 🎨 UI
     participant 🚀 API
+    participant 📊 Monitor
+    participant 🔄 Scaler
     participant 🛠️ Agent
     participant 🐙 GitHub
     
-    👤 User->>🎨 UI: Start Deployment
-    🎨 UI->>🚀 API: Request Deployment
+    👤 User->>🎨 UI: Configure Deployment
+    🎨 UI->>🚀 API: Create Deployment
     🚀 API->>🐙 GitHub: Fetch Code
     🐙 GitHub-->>🚀 API: Code
     🚀 API->>🛠️ Agent: Deploy App
-    🛠️ Agent->>🛠️ Agent: Setup Environment
-    🛠️ Agent->>🛠️ Agent: Configure Nginx
-    🛠️ Agent->>🛠️ Agent: Start Process
-    🛠️ Agent-->>🚀 API: Status Update
-    🚀 API-->>🎨 UI: Real-time Update
-    🎨 UI-->>👤 User: Deployment Complete
+    🛠️ Agent->>🛠️ Agent: Setup & Start
+    
+    loop Monitoring & Scaling
+        📊 Monitor->>🛠️ Agent: Collect Metrics
+        📊 Monitor->>🐙 GitHub: Fetch Activity
+        📊 Monitor->>🔄 Scaler: Update Metrics
+        🔄 Scaler->>🔄 Scaler: Check Rules
+        alt Needs Scaling
+            🔄 Scaler->>🛠️ Agent: Scale Deployment
+            🛠️ Agent-->>🚀 API: Scale Complete
+        end
+    end
 ```
 
-### Database Operations
+### Monitoring Data Flow
 ```mermaid
 sequenceDiagram
-    participant 🚀 API
-    participant 💾 SQLite
-    participant 📁 Backup
+    participant 📊 Monitor
+    participant 💾 Storage
+    participant 📈 Metrics
+    participant 🐙 GitHub
     
-    Note over 🚀 API,💾 SQLite: Fast, Local Operations
-    🚀 API->>💾 SQLite: Query Data
-    💾 SQLite-->>🚀 API: Response
-    
-    Note over 💾 SQLite,📁 Backup: Automatic Backups
-    💾 SQLite->>📁 Backup: Daily Backup
-    📁 Backup-->>💾 SQLite: Confirmation
+    loop Every 30s
+        📊 Monitor->>📈 Metrics: Collect System Metrics
+        📊 Monitor->>🐙 GitHub: Fetch Repository Metrics
+        
+        alt Cache Invalid
+            🐙 GitHub->>💾 Storage: Update Cache
+        end
+        
+        📊 Monitor->>💾 Storage: Store Metrics
+        📊 Monitor->>📈 Metrics: Process & Analyze
+    end
 ```
 
 ## 🔒 Security
@@ -114,28 +147,45 @@ sequenceDiagram
 - 🔑 GitHub OAuth
 - 🎟️ JWT tokens
 - 🔐 Secure sessions
+- 🔒 API key management
 
 ### Data Security
 - 📁 File-level permissions
 - 🔒 SQLite encryption
 - 🔑 Access control
+- 🔐 Metric data protection
 
 ### Network Security
 - 🛡️ HTTPS only
 - 🔒 SSL/TLS
 - 🚫 Rate limiting
+- 🔒 WebSocket security
 
-## 📊 Monitoring
+## 📊 Advanced Monitoring
 
-### Metrics Collection
-- 📈 System resources
-- 🚦 Application health
-- 🔍 Error tracking
+### System Metrics
+- 📈 CPU & Memory usage
+- 💾 Disk utilization
+- 🌐 Network traffic
+- 🚦 Process health
 
-### Logging
+### GitHub Metrics
+- 📊 Commit frequency
+- 🔄 PR activity
+- 📈 Issue tracking
+- 🌐 Repository traffic
+
+### Auto-Scaling Metrics
+- 📈 Scaling events
+- ⏱️ Cooldown periods
+- 📊 Rule triggers
+- 🎯 Performance impact
+
+### Logging & Analytics
 - 📝 Structured logs
 - 🎯 Query tracing
 - ⚡ Performance metrics
+- 📊 Scaling analytics
 
 ## 💾 Backup & Recovery
 
@@ -143,11 +193,13 @@ sequenceDiagram
 - 📁 Daily SQLite backups
 - 🔄 Configuration backups
 - 📦 Application state
+- 📊 Metric history
 
 ### Recovery Process
 - ⚡ Quick restore
 - 🔄 Point-in-time recovery
 - 🛡️ Data integrity checks
+- 📈 Metric preservation
 
 ---
 

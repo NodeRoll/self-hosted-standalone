@@ -9,6 +9,8 @@ class GitHubService {
                 Accept: 'application/vnd.github.v3+json'
             }
         });
+        this.activityCache = new Map();
+        this.CACHE_TTL = 5 * 60 * 1000; // 5 minutes
     }
 
     async getAccessToken(code) {
@@ -78,6 +80,109 @@ class GitHubService {
             logger.error('GitHub branches error:', error);
             throw new Error('Failed to get GitHub branches');
         }
+    }
+
+    async getRepositoryMetrics(accessToken, owner, repo) {
+        try {
+            // Check cache first
+            const cacheKey = `${owner}/${repo}`;
+            const cachedData = this.activityCache.get(cacheKey);
+            if (cachedData && Date.now() - cachedData.timestamp < this.CACHE_TTL) {
+                return cachedData.metrics;
+            }
+
+            // Fetch various metrics in parallel
+            const [commits, pullRequests, issues, traffic] = await Promise.all([
+                this._getRecentCommits(accessToken, owner, repo),
+                this._getOpenPullRequests(accessToken, owner, repo),
+                this._getActiveIssues(accessToken, owner, repo),
+                this._getTrafficStats(accessToken, owner, repo)
+            ]);
+
+            const metrics = {
+                commitFrequency: this._calculateCommitFrequency(commits),
+                activePRs: pullRequests.length,
+                activeIssues: issues.length,
+                trafficLoad: this._calculateTrafficLoad(traffic),
+                timestamp: Date.now()
+            };
+
+            // Cache the results
+            this.activityCache.set(cacheKey, {
+                metrics,
+                timestamp: Date.now()
+            });
+
+            return metrics;
+        } catch (error) {
+            logger.error('GitHub metrics error:', error);
+            throw new Error('Failed to get GitHub repository metrics');
+        }
+    }
+
+    async _getRecentCommits(accessToken, owner, repo) {
+        const response = await this.client.get(
+            `/repos/${owner}/${repo}/commits`,
+            {
+                headers: { Authorization: `token ${accessToken}` },
+                params: {
+                    per_page: 100,
+                    since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Last 24 hours
+                }
+            }
+        );
+        return response.data;
+    }
+
+    async _getOpenPullRequests(accessToken, owner, repo) {
+        const response = await this.client.get(
+            `/repos/${owner}/${repo}/pulls`,
+            {
+                headers: { Authorization: `token ${accessToken}` },
+                params: { state: 'open' }
+            }
+        );
+        return response.data;
+    }
+
+    async _getActiveIssues(accessToken, owner, repo) {
+        const response = await this.client.get(
+            `/repos/${owner}/${repo}/issues`,
+            {
+                headers: { Authorization: `token ${accessToken}` },
+                params: {
+                    state: 'open',
+                    labels: 'active'
+                }
+            }
+        );
+        return response.data;
+    }
+
+    async _getTrafficStats(accessToken, owner, repo) {
+        const response = await this.client.get(
+            `/repos/${owner}/${repo}/traffic/views`,
+            {
+                headers: { Authorization: `token ${accessToken}` }
+            }
+        );
+        return response.data;
+    }
+
+    _calculateCommitFrequency(commits) {
+        // Calculate commits per hour over the last 24 hours
+        const now = Date.now();
+        const commitTimes = commits.map(c => new Date(c.commit.author.date).getTime());
+        const recentCommits = commitTimes.filter(time => now - time <= 24 * 60 * 60 * 1000);
+        return recentCommits.length / 24;
+    }
+
+    _calculateTrafficLoad(traffic) {
+        // Calculate average views per hour over the last day
+        const views = traffic.views || [];
+        const recentViews = views.slice(-24);
+        const totalViews = recentViews.reduce((sum, view) => sum + view.count, 0);
+        return totalViews / 24;
     }
 }
 
