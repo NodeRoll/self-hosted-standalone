@@ -1,50 +1,66 @@
-# React + TypeScript + Vite
+# 🎨 NodeRoll Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Modern, responsive, and developer-friendly UI for NodeRoll deployment platform.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🎯 Clean and intuitive interface
+- 🌓 Dark/Light theme support
+- 📱 Fully responsive design
+- ⚡ Real-time updates
+- 📊 Interactive metrics visualization
+- 🔐 Secure authentication
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- React 18 with TypeScript
+- Vite for blazing fast development
+- Tailwind CSS for styling
+- Zustand for state management
+- Socket.io for real-time updates
+- Recharts for data visualization
 
-- Configure the top-level `parserOptions` property like this:
+## Project Structure
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```
+src/
+├── components/           # Reusable components
+│   ├── ui/              # Basic UI components
+│   ├── layout/          # Layout components
+│   └── dashboard/       # Dashboard-specific components
+├── hooks/               # Custom React hooks
+├── lib/                 # Utility functions
+├── pages/               # Page components
+├── store/              # State management
+├── styles/             # Global styles
+└── types/              # TypeScript types
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Getting Started
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+1. Install dependencies:
+```bash
+npm install
 ```
+
+2. Start development server:
+```bash
+npm run dev
+```
+
+3. Build for production:
+```bash
+npm run build
+```
+
+## Development Guidelines
+
+- Use TypeScript for type safety
+- Follow the component structure
+- Implement responsive design
+- Write clean, maintainable code
+- Add proper documentation
+
+## Contributing
+
+Please read our [Contributing Guide](../CONTRIBUTING.md) before making a pull request.

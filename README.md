@@ -2,13 +2,6 @@
 
 > 🌟 Deploy Node.js apps with joy! Simple, powerful, and developer-friendly.
 
-<div align="center">
-
-[![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-
-</div>
-
 ## ✨ Features
 
 ### 🎯 Simple Deployment
@@ -52,7 +45,7 @@ git clone https://github.com/NodeRoll/self-hosted-standalone.git
 # Enter the portal
 cd self-hosted-standalone
 
-# Setup everything (Node.js v14+ required)
+# Setup everything
 npm run setup
 
 # Launch! 🚀
@@ -64,33 +57,34 @@ npm run dev
 - Node.js v14 or higher
 - 512MB RAM minimum (1GB recommended)
 - 1GB free disk space
-- GitHub account for repository integration
+- Docker (optional, for container deployments)
+- PM2 (optional, for process management)
 
 ## 📚 Documentation
 
 | Section | Description |
 |---------|-------------|
+| [📥 Installation](docs/installation/INSTALLATION.md) | Getting started guide |
+| [📖 Usage Guide](docs/usage/USAGE.md) | How to use NodeRoll |
 | [🏗️ Architecture](docs/ARCHITECTURE.md) | System design and components |
-| [📖 Development Guide](docs/DEVELOPMENT.md) | Development setup and guidelines |
-| [🚀 Deployment Guide](docs/DEPLOYMENT.md) | Production deployment guide |
-| [🔌 API Documentation](docs/API.md) | API endpoints and usage |
+| [💻 Development](docs/development/DEVELOPMENT.md) | Development guide |
+| [🚀 Deployment](docs/deployment/STRATEGIES.md) | Deployment strategies |
+| [🔌 API Reference](docs/api/API.md) | API documentation |
+| [📊 Monitoring](docs/monitoring/MONITORING.md) | Monitoring guide |
+| [🔐 Security](docs/security/SECURITY.md) | Security guide |
 | [🤝 Contributing](CONTRIBUTING.md) | How to contribute |
 | [🗺️ Roadmap](ROADMAP.md) | Future plans |
 
 ## 🛠️ Tech Stack
 
-<div align="center">
-
 | Category | Technologies |
 |----------|-------------|
-| **Backend** | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white) |
-| **Frontend** | ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) ![TailwindCSS](https://img.shields.io/badge/Tailwind-38B2AC?style=flat&logo=tailwind-css&logoColor=white) |
-| **Database** | ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat&logo=sqlite&logoColor=white) |
-| **Infrastructure** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white) ![Nginx](https://img.shields.io/badge/Nginx-009639?style=flat&logo=nginx&logoColor=white) |
-| **Authentication** | ![GitHub](https://img.shields.io/badge/GitHub_OAuth-181717?style=flat&logo=github&logoColor=white) |
-| **Monitoring** | ![Custom Solution](https://img.shields.io/badge/Custom_Monitoring-FF4F64?style=flat&logo=gauge&logoColor=white) |
-
-</div>
+| **Backend** | Node.js, Express |
+| **Frontend** | React, TypeScript, Tailwind CSS |
+| **Database** | SQLite |
+| **Infrastructure** | Docker, Nginx |
+| **Authentication** | GitHub OAuth |
+| **Monitoring** | Custom metrics, Prometheus compatible |
 
 ## 🌟 Why NodeRoll?
 
@@ -100,33 +94,24 @@ npm run dev
 - GitHub-aware monitoring
 - Built-in SSL & domains
 
-### 🚀 Developer Experience
-- Clean, intuitive interface
-- Real-time deployment feedback
-- Smart dependency handling
-- Automated health checks
+### 🎯 Developer First
+- Clean, intuitive UI
+- Real-time updates
+- Detailed logging
+- Easy debugging
 
-### 📊 Smart Scaling
-- System metrics-based scaling
-- GitHub activity monitoring
-- Traffic-based auto-scaling
-- Custom scaling rules
-- Cooldown periods
+### 🔐 Secure by Design
+- OAuth authentication
+- RBAC authorization
+- SSL by default
+- Secure secrets
 
-### 🔒 Security First
-- Secure GitHub OAuth
-- Automatic SSL
-- Environment isolation
-- Access control
+### 📊 Smart Monitoring
+- Real-time metrics
+- Auto-scaling
+- Health checks
+- Smart alerts
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-We love contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-## 💫 Support
-
-If you like NodeRoll, give it a ⭐️ to show your support!
