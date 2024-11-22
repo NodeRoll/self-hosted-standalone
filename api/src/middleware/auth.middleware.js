@@ -1,76 +1,63 @@
 const jwt = require('jsonwebtoken');
-const { AppError } = require('./errorHandler');
+const crypto = require('crypto');
 const { User } = require('../models');
+const { AppError } = require('./errorHandler');
 const logger = require('../utils/logger');
+
+const extractToken = (req) => {
+    if (req.headers.authorization?.startsWith('Bearer ')) {
+        return req.headers.authorization.split(' ')[1];
+    }
+    if (req.headers['x-api-key']) {
+        return req.headers['x-api-key'];
+    }
+    return null;
+};
 
 const auth = async (req, res, next) => {
     try {
-        // Get token from header
-        const token = req.header('Authorization')?.replace('Bearer ', '');
+        const token = extractToken(req);
         if (!token) {
             throw new AppError(401, 'Authentication required');
         }
 
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findByPk(decoded.id);
+        // First try JWT token
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await User.findById(decoded.id);
+            if (!user) {
+                throw new AppError(401, 'User not found');
+            }
+            req.user = user;
+            return next();
+        } catch (jwtError) {
+            // If JWT verification fails, try API token
+            const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+            const user = await User.findOne({
+                'apiTokens.token': hashedToken
+            });
 
-        if (!user) {
-            throw new AppError(401, 'User not found');
-        }
+            if (!user) {
+                throw new AppError(401, 'Invalid authentication token');
+            }
 
-        // Add user to request
-        req.user = user;
-        next();
-    } catch (error) {
-        if (error.name === 'JsonWebTokenError') {
-            next(new AppError(401, 'Invalid token'));
-        } else {
-            next(error);
-        }
-    }
-};
-
-const requireAdmin = async (req, res, next) => {
-    try {
-        if (req.user.role !== 'admin') {
-            throw new AppError(403, 'Admin access required');
-        }
-        next();
-    } catch (error) {
-        next(error);
-    }
-};
-
-const requireProjectAccess = async (req, res, next) => {
-    try {
-        const { projectId } = req.params;
-        const user = req.user;
-
-        // Admin can access all projects
-        if (user.role === 'admin') {
+            req.user = user;
             return next();
         }
-
-        // Find project
-        const project = await user.getProjects({
-            where: { id: projectId }
-        });
-
-        if (!project || project.length === 0) {
-            throw new AppError(403, 'Project access denied');
-        }
-
-        // Add project to request
-        req.project = project[0];
-        next();
     } catch (error) {
+        logger.error('Authentication error:', error);
         next(error);
     }
+};
+
+const requireAdmin = (req, res, next) => {
+    if (req.user?.role !== 'admin') {
+        throw new AppError(403, 'Admin access required');
+    }
+    next();
 };
 
 module.exports = {
     auth,
-    requireAdmin,
-    requireProjectAccess
+    requireAdmin
 };
