@@ -56,3 +56,6 @@ Thumbs.db
 # Application specific
 uploads/
 temp/
+
+# AI Chat logs
+.aichat/
