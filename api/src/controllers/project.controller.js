@@ -6,31 +6,31 @@ const logger = require('../utils/logger');
 class ProjectController {
     async create(req, res, next) {
         try {
-            const { name, description, githubRepo, branch = 'main', domain } = req.body;
+            const { name, description, github_repo, branch = 'main', domain } = req.body;
 
             // Validate GitHub repository
-            const [owner, repo] = githubRepo.split('/');
+            const [owner, repo] = github_repo.split('/');
             if (!owner || !repo) {
                 throw new AppError(400, 'Invalid GitHub repository format. Use owner/repo');
             }
 
             // Check if repository exists and user has access
-            await githubService.getRepository(req.user.githubToken, owner, repo);
+            await githubService.getRepository(req.user.github_token, owner, repo);
 
             // Create project
             const project = await Project.create({
                 name,
                 description,
-                githubRepo,
+                github_repo,
                 branch,
                 domain,
-                ownerId: req.user.id
+                owner_id: req.user.id
             });
 
             // Add owner as collaborator
             await ProjectCollaborator.create({
-                projectId: project.id,
-                userId: req.user.id,
+                project_id: project.id,
+                user_id: req.user.id,
                 role: 'owner'
             });
 
@@ -73,8 +73,8 @@ class ProjectController {
 
     async get(req, res, next) {
         try {
-            const { projectId } = req.params;
-            const project = await Project.findByPk(projectId, {
+            const { project_id } = req.params;
+            const project = await Project.findByPk(project_id, {
                 include: [
                     { model: User, as: 'owner' },
                     { model: User, as: 'collaborators' }
@@ -93,10 +93,10 @@ class ProjectController {
 
     async update(req, res, next) {
         try {
-            const { projectId } = req.params;
+            const { project_id } = req.params;
             const { name, description, branch, domain } = req.body;
 
-            const project = await Project.findByPk(projectId);
+            const project = await Project.findByPk(project_id);
             if (!project) {
                 throw new AppError(404, 'Project not found');
             }
@@ -119,9 +119,9 @@ class ProjectController {
 
     async delete(req, res, next) {
         try {
-            const { projectId } = req.params;
+            const { project_id } = req.params;
 
-            const project = await Project.findByPk(projectId);
+            const project = await Project.findByPk(project_id);
             if (!project) {
                 throw new AppError(404, 'Project not found');
             }
@@ -137,22 +137,22 @@ class ProjectController {
 
     async addCollaborator(req, res, next) {
         try {
-            const { projectId } = req.params;
-            const { userId, role = 'collaborator' } = req.body;
+            const { project_id } = req.params;
+            const { user_id, role = 'collaborator' } = req.body;
 
-            const project = await Project.findByPk(projectId);
+            const project = await Project.findByPk(project_id);
             if (!project) {
                 throw new AppError(404, 'Project not found');
             }
 
-            const user = await User.findByPk(userId);
+            const user = await User.findByPk(user_id);
             if (!user) {
                 throw new AppError(404, 'User not found');
             }
 
             await ProjectCollaborator.create({
-                projectId,
-                userId,
+                project_id,
+                user_id,
                 role
             });
 
@@ -166,10 +166,10 @@ class ProjectController {
 
     async removeCollaborator(req, res, next) {
         try {
-            const { projectId, userId } = req.params;
+            const { project_id, user_id } = req.params;
 
             const collaborator = await ProjectCollaborator.findOne({
-                where: { projectId, userId }
+                where: { project_id, user_id }
             });
 
             if (!collaborator) {
@@ -181,7 +181,7 @@ class ProjectController {
             }
 
             await collaborator.destroy();
-            logger.info(`Collaborator removed from project ${projectId}`);
+            logger.info(`Collaborator removed from project ${project_id}`);
 
             res.status(204).send();
         } catch (error) {

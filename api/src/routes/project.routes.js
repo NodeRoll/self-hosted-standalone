@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const projectController = require('../controllers/project.controller');
-const { authenticate, isAdmin, canAccessProject } = require('../middleware/auth.middleware');
+const { auth, requireAdmin, requireProjectAccess } = require('../middleware/auth.middleware');
 
 // Project CRUD routes
-router.post('/', authenticate, projectController.create);
-router.get('/', authenticate, projectController.list);
-router.get('/:projectId', authenticate, canAccessProject, projectController.get);
-router.put('/:projectId', authenticate, canAccessProject, projectController.update);
-router.delete('/:projectId', authenticate, canAccessProject, projectController.delete);
+router.post('/', auth, projectController.create);
+router.get('/', auth, projectController.list);
+router.get('/:projectId', auth, requireProjectAccess, projectController.get);
+router.put('/:projectId', auth, requireProjectAccess, projectController.update);
+router.delete('/:projectId', auth, requireProjectAccess, projectController.delete);
 
 // Collaborator management routes
-router.post('/:projectId/collaborators', authenticate, canAccessProject, projectController.addCollaborator);
-router.delete('/:projectId/collaborators/:userId', authenticate, canAccessProject, projectController.removeCollaborator);
+router.post('/:projectId/collaborators', auth, requireProjectAccess, projectController.addCollaborator);
+router.delete('/:projectId/collaborators/:userId', auth, requireProjectAccess, projectController.removeCollaborator);
 
 module.exports = router;

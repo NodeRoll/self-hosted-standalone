@@ -7,7 +7,7 @@ const Deployment = sequelize.define('Deployment', {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
-    projectId: {
+    project_id: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
@@ -15,7 +15,7 @@ const Deployment = sequelize.define('Deployment', {
             key: 'id'
         }
     },
-    commitHash: {
+    commit_hash: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -34,7 +34,7 @@ const Deployment = sequelize.define('Deployment', {
     error: {
         type: DataTypes.TEXT
     },
-    initiatedBy: {
+    initiated_by: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
@@ -42,30 +42,32 @@ const Deployment = sequelize.define('Deployment', {
             key: 'id'
         }
     },
-    rollbackFromId: {
+    rollback_from_id: {
         type: DataTypes.UUID,
         references: {
             model: 'Deployments',
             key: 'id'
         }
     },
-    startedAt: {
+    started_at: {
         type: DataTypes.DATE
     },
-    completedAt: {
+    completed_at: {
         type: DataTypes.DATE
     }
 }, {
     timestamps: true,
+    tableName: 'Deployments',
+    underscored: true,
     indexes: [
         {
-            fields: ['projectId']
+            fields: ['project_id']
         },
         {
             fields: ['status']
         },
         {
-            fields: ['createdAt']
+            fields: ['created_at']
         }
     ]
 });

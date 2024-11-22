@@ -4,6 +4,7 @@ const { exec } = require('child_process');
 const util = require('util');
 const execAsync = util.promisify(exec);
 const logger = require('../../utils/logger');
+const configService = require('../config.service');
 const DeploymentStrategy = require('./base.strategy');
 const { AppError } = require('../../middleware/errorHandler');
 
@@ -21,21 +22,76 @@ class DockerDeploymentStrategy extends DeploymentStrategy {
             // Check if Docker is installed and running
             await execAsync('docker info');
 
-            // Validate Dockerfile exists in the repository
+            // Load .noderoll config
+            const config = await configService.loadProjectConfig(this.workDir);
+            await configService.validateConfig(config);
+            this.runtimeConfig = configService.convertToRuntimeConfig(config);
+
+            // Validate or create Dockerfile if it doesn't exist
             const dockerfilePath = path.join(this.workDir, 'Dockerfile');
-            await fs.access(dockerfilePath);
+            try {
+                await fs.access(dockerfilePath);
+                logger.info('Using existing Dockerfile');
+            } catch {
+                // If Dockerfile doesn't exist, create one for Node.js app
+                await this.createNodeDockerfile();
+            }
 
             return true;
         } catch (error) {
             if (error.code === 'ENOENT') {
-                throw new AppError(400, 'Dockerfile not found in repository');
+                throw new AppError(400, 'Failed to create or validate Dockerfile');
             }
             throw new AppError(500, 'Docker is not available or accessible');
         }
     }
 
+    async createNodeDockerfile() {
+        const { nodeVersion, startCommand, buildCommand } = this.runtimeConfig;
+        
+        // Parse start command for proper Dockerfile CMD format
+        const parsedStartCommand = startCommand.split(' ').map(part => `"${part}"`);
+        
+        const dockerfileContent = `
+# Base image
+FROM node:${nodeVersion}
+
+# Working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN ${buildCommand}
+
+# Copy application files
+COPY . .
+
+# Default port
+ENV PORT=3000
+
+# Expose port
+EXPOSE \${PORT}
+
+# Start command
+CMD [${parsedStartCommand}]
+        `.trim();
+
+        const dockerfilePath = path.join(this.workDir, 'Dockerfile');
+        await fs.writeFile(dockerfilePath, dockerfileContent);
+        logger.info('Created Dockerfile for Node.js application', {
+            nodeVersion,
+            startCommand,
+            buildCommand
+        });
+    }
+
     async deploy() {
         try {
+            // Run pre-deploy hooks
+            await configService.processHooks(this.runtimeConfig, 'preDeploy', this.workDir);
+
             // Build Docker image
             logger.info(`Building Docker image for ${this.project.name}`);
             await execAsync(`docker build -t ${this.containerName} ${this.workDir}`);
@@ -48,105 +104,89 @@ class DockerDeploymentStrategy extends DeploymentStrategy {
                 // Ignore errors if container doesn't exist
             }
 
-            // Prepare environment variables
-            const envVars = this.project.envVars || {};
-            const envFlags = Object.entries(envVars)
-                .map(([key, value]) => `-e "${key}=${value}"`)
-                .join(' ');
+            // Get available port
+            const port = await this.getAvailablePort();
 
-            // Run the container
-            const portMapping = this.project.port ? `-p ${this.project.port}:${this.project.port}` : '';
-            const cmd = `docker run -d --name ${this.containerName} ${portMapping} ${envFlags} ${this.containerName}`;
+            // Prepare environment variables
+            const envVars = {
+                ...(this.runtimeConfig.env || {}),
+                ...(this.project.env_vars || {}),
+                PORT: port
+            };
             
-            logger.info(`Starting container: ${this.containerName}`);
-            await execAsync(cmd);
+            // Create env file
+            const envFile = path.join(this.workDir, '.env');
+            const envContent = Object.entries(envVars)
+                .map(([key, value]) => `${key}=${value}`)
+                .join('\n');
+            await fs.writeFile(envFile, envContent);
+
+            // Run container with resource limits
+            const { memory, cpus, storage } = this.runtimeConfig.resourceLimits;
+            logger.info(`Starting container ${this.containerName} with resource limits`, {
+                memory,
+                cpus,
+                storage
+            });
+
+            await execAsync(`docker run -d \
+                --name ${this.containerName} \
+                --memory=${memory} \
+                --cpus=${cpus} \
+                --storage-opt size=${storage} \
+                --env-file ${envFile} \
+                -p ${port}:${envVars.PORT} \
+                --restart unless-stopped \
+                ${this.containerName}`);
 
             // Wait for container to be healthy
-            await this.waitForHealthy();
+            await this.waitForHealthCheck(port);
 
-            return true;
+            // Run post-deploy hooks
+            await configService.processHooks(this.runtimeConfig, 'postDeploy', this.workDir);
+
+            return {
+                port,
+                containerId: (await execAsync(`docker ps -q -f name=${this.containerName}`)).stdout.trim()
+            };
         } catch (error) {
-            logger.error('Docker deployment failed:', error);
+            logger.error('Deployment failed:', error);
             throw new AppError(500, `Deployment failed: ${error.message}`);
         }
     }
 
-    async rollback() {
-        try {
-            // Pull the previous image if it exists
-            const previousTag = `${this.containerName}:previous`;
-            await execAsync(`docker tag ${this.containerName} ${previousTag}`);
-            
-            // Stop and remove current container
-            await this.stop();
+    async waitForHealthCheck(port) {
+        const { path: healthPath, interval, timeout, retries } = this.runtimeConfig.healthCheck;
+        const maxRetries = retries || 30;
+        const retryDelay = parseInt(interval) || 2000;
 
-            // Run container with previous image
-            await execAsync(`docker run -d --name ${this.containerName} ${previousTag}`);
-            
-            return true;
-        } catch (error) {
-            logger.error('Docker rollback failed:', error);
-            throw new AppError(500, `Rollback failed: ${error.message}`);
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                await execAsync(`curl -s http://localhost:${port}${healthPath}`);
+                logger.info(`Container ${this.containerName} is healthy`);
+                return true;
+            } catch (error) {
+                if (i === maxRetries - 1) {
+                    throw new Error('Health check failed after maximum retries');
+                }
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+            }
         }
     }
 
-    async stop() {
-        try {
-            await execAsync(`docker stop ${this.containerName}`);
-            await execAsync(`docker rm ${this.containerName}`);
-            return true;
-        } catch (error) {
-            logger.error('Failed to stop container:', error);
-            throw new AppError(500, `Failed to stop container: ${error.message}`);
-        }
-    }
-
-    async getLogs(tail = 100) {
-        try {
-            const { stdout } = await execAsync(`docker logs --tail ${tail} ${this.containerName}`);
-            return stdout;
-        } catch (error) {
-            logger.error('Failed to get container logs:', error);
-            throw new AppError(500, `Failed to get logs: ${error.message}`);
-        }
+    async getAvailablePort() {
+        // Get a random port between 3000-9000
+        return Math.floor(Math.random() * (9000 - 3000 + 1) + 3000);
     }
 
     async cleanup() {
         try {
-            // Remove container and image
-            await this.stop();
+            await execAsync(`docker stop ${this.containerName}`);
+            await execAsync(`docker rm ${this.containerName}`);
             await execAsync(`docker rmi ${this.containerName}`);
-            
-            // Cleanup workspace
-            await fs.rm(this.workDir, { recursive: true, force: true });
-            
-            return true;
         } catch (error) {
-            logger.error('Cleanup failed:', error);
-            throw new AppError(500, `Cleanup failed: ${error.message}`);
+            logger.warn(`Cleanup failed for ${this.containerName}:`, error);
         }
-    }
-
-    async checkHealth() {
-        try {
-            const { stdout } = await execAsync(`docker inspect --format='{{.State.Health.Status}}' ${this.containerName}`);
-            return stdout.trim() === 'healthy';
-        } catch (error) {
-            return false;
-        }
-    }
-
-    async waitForHealthy(timeout = 30000, interval = 1000) {
-        const startTime = Date.now();
-        
-        while (Date.now() - startTime < timeout) {
-            if (await this.checkHealth()) {
-                return true;
-            }
-            await new Promise(resolve => setTimeout(resolve, interval));
-        }
-        
-        throw new AppError(500, 'Container failed to become healthy');
     }
 }
 

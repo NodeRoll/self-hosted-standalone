@@ -19,6 +19,6 @@ router.get('/health', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/projects', projectRoutes);
 router.use('/deployments', deploymentRoutes);
-router.use('/agent', agentRoutes);
+router.use('/agents', agentRoutes);
 
 module.exports = router;

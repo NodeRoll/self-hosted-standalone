@@ -15,7 +15,7 @@ const Project = sequelize.define('Project', {
         type: DataTypes.TEXT,
         allowNull: true
     },
-    githubRepo: {
+    github_repo: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -29,7 +29,7 @@ const Project = sequelize.define('Project', {
         allowNull: true,
         unique: true
     },
-    envVars: {
+    env_vars: {
         type: DataTypes.JSON,
         defaultValue: {},
         allowNull: false
@@ -39,12 +39,36 @@ const Project = sequelize.define('Project', {
         defaultValue: 'inactive',
         allowNull: false
     },
-    lastDeployedAt: {
+    runtime_config: {
+        type: DataTypes.JSON,
+        defaultValue: {
+            nodeVersion: '18-slim',
+            startCommand: 'npm start',
+            buildCommand: 'npm ci --only=production',
+            resourceLimits: {
+                memory: '512M',
+                cpus: '0.5',
+                storage: '1G'
+            }
+        },
+        allowNull: false
+    },
+    last_deployed_at: {
         type: DataTypes.DATE,
         allowNull: true
+    },
+    owner_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: 'Users',
+            key: 'id'
+        }
     }
 }, {
     timestamps: true,
+    underscored: true,
+    tableName: 'projects',
     indexes: [
         { unique: true, fields: ['domain'] }
     ]
@@ -53,8 +77,6 @@ const Project = sequelize.define('Project', {
 // Instance methods
 Project.prototype.toJSON = function() {
     const values = { ...this.get() };
-    // Remove sensitive data from JSON response
-    delete values.envVars;
     return values;
 };
 

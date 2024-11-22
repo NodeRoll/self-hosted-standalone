@@ -15,17 +15,21 @@ class DeploymentController {
                 throw new AppError(404, 'Project not found');
             }
 
-            // Validate commit hash with GitHub
-            const [owner, repo] = project.githubRepo.split('/');
-            await githubService.validateCommit(req.user.githubToken, owner, repo, commitHash);
+            try {
+                // Validate commit hash with GitHub
+                const [owner, repo] = project.githubRepo.split('/');
+                await githubService.validateCommit(owner, repo, commitHash);
+            } catch (error) {
+                throw new AppError(400, `Invalid commit: ${error.message}`);
+            }
 
             // Create deployment record
             const deployment = await Deployment.create({
-                projectId,
-                commitHash,
+                project_id: projectId,
+                commit_hash: commitHash,
                 branch: branch || project.branch,
                 status: 'pending',
-                initiatedBy: req.user.id
+                initiated_by: req.user.id
             });
 
             // Send deployment request to agent
@@ -51,7 +55,7 @@ class DeploymentController {
             const { projectId } = req.params;
             const { status, limit = 10, offset = 0 } = req.query;
 
-            const where = { projectId };
+            const where = { project_id: projectId };
             if (status) {
                 where.status = status;
             }
@@ -60,7 +64,7 @@ class DeploymentController {
                 where,
                 limit: parseInt(limit),
                 offset: parseInt(offset),
-                order: [['createdAt', 'DESC']],
+                order: [['created_at', 'DESC']],
                 include: [{
                     model: Project,
                     attributes: ['name', 'githubRepo']
@@ -83,7 +87,7 @@ class DeploymentController {
             const { projectId, deploymentId } = req.params;
 
             const deployment = await Deployment.findOne({
-                where: { id: deploymentId, projectId },
+                where: { id: deploymentId, project_id: projectId },
                 include: [{
                     model: Project,
                     attributes: ['name', 'githubRepo', 'domain']
@@ -105,7 +109,7 @@ class DeploymentController {
             const { projectId, deploymentId } = req.params;
 
             const deployment = await Deployment.findOne({
-                where: { id: deploymentId, projectId }
+                where: { id: deploymentId, project_id: projectId }
             });
 
             if (!deployment) {
@@ -136,7 +140,7 @@ class DeploymentController {
             const { projectId, deploymentId } = req.params;
 
             const deployment = await Deployment.findOne({
-                where: { id: deploymentId, projectId },
+                where: { id: deploymentId, project_id: projectId },
                 include: [{ model: Project }]
             });
 
@@ -150,26 +154,22 @@ class DeploymentController {
 
             // Create new deployment for rollback
             const rollbackDeployment = await Deployment.create({
-                projectId,
-                commitHash: deployment.commitHash,
+                project_id: projectId,
+                commit_hash: deployment.commit_hash,
                 branch: deployment.branch,
                 status: 'pending',
-                initiatedBy: req.user.id,
-                rollbackFromId: deploymentId
+                initiated_by: req.user.id,
+                rollback_from_id: deployment.id
             });
 
             // Send rollback request to agent
-            await publishToAgent('deployment.create', {
+            await publishToAgent('deployment.rollback', {
                 deploymentId: rollbackDeployment.id,
                 projectId,
-                githubRepo: deployment.Project.githubRepo,
-                commitHash: deployment.commitHash,
-                branch: deployment.branch,
-                envVars: deployment.Project.envVars,
-                isRollback: true
+                fromDeploymentId: deployment.id
             });
 
-            logger.info(`Rollback initiated for project ${deployment.Project.name} to commit ${deployment.commitHash}`);
+            logger.info(`Rollback initiated for project ${deployment.Project.name} to deployment ${deployment.id}`);
 
             res.status(201).json(rollbackDeployment);
         } catch (error) {

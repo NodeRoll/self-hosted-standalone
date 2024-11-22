@@ -30,9 +30,7 @@ const ProjectCollaborator = sequelize.define('ProjectCollaborator', {
     }
 }, {
     timestamps: true,
-    indexes: [
-        { unique: true, fields: ['projectId', 'userId'] }
-    ]
+    tableName: 'ProjectCollaborators'
 });
 
 module.exports = ProjectCollaborator;

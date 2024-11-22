@@ -1,0 +1,33 @@
+{
+    "name": "my-nodejs-app",
+    "type": "nodejs",
+    "engine": {
+        "node": "18-slim"
+    },
+    "scripts": {
+        "build": "npm ci && npm run build",
+        "start": "node dist/main.js"
+    },
+    "resources": {
+        "memory": "512M",
+        "cpus": "0.5",
+        "storage": "1G"
+    },
+    "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000"
+    },
+    "domains": [
+        "myapp.example.com"
+    ],
+    "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3
+    },
+    "hooks": {
+        "preDeploy": "npm run db:migrate",
+        "postDeploy": "npm run cache:clear"
+    }
+}

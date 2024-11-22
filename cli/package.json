@@ -1,0 +1,36 @@
+{
+  "name": "noderoll-cli",
+  "version": "0.1.0",
+  "description": "Simple and powerful deployment tool for Node.js applications",
+  "main": "src/index.js",
+  "bin": {
+    "noderoll": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "nodejs",
+    "deployment",
+    "docker",
+    "paas",
+    "hosting",
+    "devops"
+  ],
+  "author": "NodeRoll Team",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^9.0.0",
+    "inquirer": "^8.2.0",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "axios": "^0.24.0",
+    "yaml": "^2.0.0",
+    "update-notifier": "^5.1.0",
+    "conf": "^10.1.1",
+    "boxen": "^6.2.1",
+    "archiver": "^5.3.1",
+    "ws": "^8.2.3"
+  }
+}
