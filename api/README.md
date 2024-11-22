@@ -1,88 +1,90 @@
 # NodeRoll API Server
 
-The API server is the core component of NodeRoll, handling all business logic and data operations.
+NodeRoll API Server is a powerful Node.js deployment platform that supports both Docker-based and file-based deployments.
 
-## Structure
+## Features
 
-```
-api/
-├── routes/          # API route definitions
-├── controllers/     # Request handlers
-├── middleware/      # Express middleware
-└── services/        # Business logic services
-```
+- GitHub integration for repository management
+- Multiple deployment strategies (Docker and PM2)
+- Project and user management
+- Deployment history and logs
+- Environment variable management
+- Health monitoring
 
-## Key Features
+## Prerequisites
 
-- GitHub OAuth integration
-- Repository management
-- Deployment coordination
-- System monitoring
-- Real-time updates via WebSocket
+- Node.js >= 14
+- SQLite3
+- Docker (optional, for Docker-based deployments)
+- PM2 (optional, for file-based deployments)
 
-## Technical Stack
+## Installation
 
-- Node.js & Express
-- MongoDB for data storage
-- JWT for authentication
-- WebSocket for real-time updates
-- PM2 for process management
-
-## API Endpoints
-
-### Authentication
-- `POST /auth/github` - GitHub OAuth flow
-- `POST /auth/refresh` - Refresh JWT token
-
-### Repositories
-- `GET /repos` - List connected repositories
-- `POST /repos/connect` - Connect new repository
-- `DELETE /repos/:id` - Remove repository
-
-### Deployments
-- `POST /deploy` - Start new deployment
-- `GET /deploy/:id` - Get deployment status
-- `POST /deploy/:id/rollback` - Rollback deployment
-
-### System
-- `GET /system/status` - Get system status
-- `GET /system/logs` - Get system logs
-- `GET /system/metrics` - Get system metrics
-
-## Development
-
+1. Clone the repository:
 ```bash
-# Install dependencies
-npm install
-
-# Set up environment
-cp .env.example .env
-
-# Start development server
-npm run dev
-
-# Run tests
-npm test
+git clone https://github.com/your-username/noderoll.git
+cd noderoll/api
 ```
 
-## Environment Variables
+2. Install dependencies:
+```bash
+npm install
+```
 
-```env
+3. Copy environment variables:
+```bash
+cp .env.example .env
+```
+
+4. Update environment variables in `.env`:
+```
 # Server Configuration
 PORT=3000
 NODE_ENV=development
+LOG_LEVEL=info
 
-# MongoDB
-MONGO_URI=mongodb://localhost:27017/noderoll
+# Database Configuration
+DB_PATH=data/noderoll.db
 
-# GitHub OAuth
-GITHUB_CLIENT_ID=your_client_id
-GITHUB_CLIENT_SECRET=your_client_secret
+# JWT Configuration
+JWT_SECRET=your-jwt-secret-key
+JWT_EXPIRES_IN=7d
 
-# JWT
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRES_IN=24h
+# GitHub OAuth Configuration
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_CALLBACK_URL=http://localhost:3000/api/auth/github/callback
 
-# Agent Communication
-AGENT_SECRET=your_agent_secret
+# Agent Configuration
+AGENT_SECRET=your-agent-secret-key
 ```
+
+5. Run setup script:
+```bash
+npm run setup
+```
+
+## Development
+
+Start the development server:
+```bash
+npm run dev
+```
+
+## Production
+
+Start the production server:
+```bash
+npm start
+```
+
+## Testing
+
+Run tests:
+```bash
+npm test
+```
+
+## License
+
+MIT

@@ -34,9 +34,15 @@ The brain of NodeRoll, orchestrating all operations.
 
 #### Technologies
 - ⚙️ Node.js & Express
-- 🗄️ MongoDB
+- 💾 SQLite with Sequelize
 - 🔑 JWT auth
 - 🔌 WebSocket
+
+#### Data Storage
+- 📁 Single SQLite file
+- 🔄 Automatic backups
+- 🔒 File-based security
+- ⚡ Fast operations
 
 ### 2. 🎨 UI Server
 Beautiful and intuitive interface for developers.
@@ -86,91 +92,67 @@ sequenceDiagram
     🎨 UI-->>👤 User: Deployment Complete
 ```
 
-### SSL Setup Flow
+### Database Operations
 ```mermaid
 sequenceDiagram
-    participant 👤 User
-    participant 🎨 UI
     participant 🚀 API
-    participant 🛠️ Agent
-    participant 🔒 LetsEncrypt
+    participant 💾 SQLite
+    participant 📁 Backup
     
-    👤 User->>🎨 UI: Add Domain
-    🎨 UI->>🚀 API: Request Setup
-    🚀 API->>🛠️ Agent: Configure Domain
-    🛠️ Agent->>🔒 LetsEncrypt: Request Certificate
-    🔒 LetsEncrypt-->>🛠️ Agent: SSL Certificate
-    🛠️ Agent->>🛠️ Agent: Configure Nginx
-    🛠️ Agent-->>🚀 API: Setup Complete
-    🚀 API-->>🎨 UI: Update Status
-```
-
-## 📁 File Structure
-
-```
-/var/lib/noderoll/
-├── 📦 apps/                  # Deployed applications
-│   ├── app1/
-│   │   ├── code/            # Application code
-│   │   ├── logs/            # Application logs
-│   │   └── .env             # Environment variables
-│   └── app2/
-├── 🔄 nginx/                 # Nginx configurations
-│   ├── sites-available/
-│   └── sites-enabled/
-├── 🔒 ssl/                   # SSL certificates
-│   ├── live/
-│   └── archive/
-├── 📝 logs/                  # System logs
-└── 💾 backups/              # System backups
+    Note over 🚀 API,💾 SQLite: Fast, Local Operations
+    🚀 API->>💾 SQLite: Query Data
+    💾 SQLite-->>🚀 API: Response
+    
+    Note over 💾 SQLite,📁 Backup: Automatic Backups
+    💾 SQLite->>📁 Backup: Daily Backup
+    📁 Backup-->>💾 SQLite: Confirmation
 ```
 
 ## 🔒 Security
 
-### Process Isolation
-- 👤 Per-app system users
-- 📁 Limited file access
-- 📊 Resource limits
+### Authentication
+- 🔑 GitHub OAuth
+- 🎟️ JWT tokens
+- 🔐 Secure sessions
+
+### Data Security
+- 📁 File-level permissions
+- 🔒 SQLite encryption
+- 🔑 Access control
 
 ### Network Security
-- 🔒 Local-only services
-- 🔄 Nginx reverse proxy
-- 🔐 Auto SSL/TLS
-- 🛡️ DDoS protection
+- 🛡️ HTTPS only
+- 🔒 SSL/TLS
+- 🚫 Rate limiting
 
 ## 📊 Monitoring
 
-### Application Metrics
-- 📈 Process status
-- 💾 Memory usage
-- 💻 CPU usage
-- 🌐 Request metrics
-- ❌ Error rates
+### Metrics Collection
+- 📈 System resources
+- 🚦 Application health
+- 🔍 Error tracking
 
-### System Metrics
-- 💽 Disk usage
-- 🌐 Network traffic
-- 🔒 SSL status
-- 🔄 Nginx status
+### Logging
+- 📝 Structured logs
+- 🎯 Query tracing
+- ⚡ Performance metrics
 
-## 🎯 Single Server Focus
+## 💾 Backup & Recovery
 
-### Benefits
-- 🎯 Simple setup
-- 📦 Easy maintenance
-- 🚀 Quick deployment
-- 📊 Clear monitoring
+### Automated Backups
+- 📁 Daily SQLite backups
+- 🔄 Configuration backups
+- 📦 Application state
 
-### Considerations
-- 📈 Resource management
-- 🔒 Security focus
-- 💾 Regular backups
-- 📊 Performance monitoring
+### Recovery Process
+- ⚡ Quick restore
+- 🔄 Point-in-time recovery
+- 🛡️ Data integrity checks
 
 ---
 
 <div align="center">
 
-Made with 💖 for developers who appreciate clean architecture
+📚 [Back to Documentation](../README.md)
 
 </div>

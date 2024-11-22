@@ -1,92 +1,56 @@
 # NodeRoll Tools
 
-Utility scripts and tools for NodeRoll system management.
+This directory contains utility scripts for NodeRoll deployment platform.
 
-## Structure
+## Installation
 
-```
-tools/
-├── setup/          # Installation and setup scripts
-├── backup/         # Backup and restore tools
-└── maintenance/    # System maintenance tools
+1. Make scripts executable:
+```bash
+chmod +x *.sh
 ```
 
-## Setup Tools
+2. Add tools directory to PATH (optional):
+```bash
+export PATH=$PATH:/path/to/noderoll/tools
+```
 
-### System Setup
-- `install.sh` - Main installation script
-- `configure-nginx.sh` - Nginx configuration
-- `configure-mongodb.sh` - MongoDB setup
-- `setup-ssl.sh` - Initial SSL setup
+## Available Tools
 
-### Development Setup
-- `dev-setup.sh` - Development environment setup
-- `generate-keys.sh` - Generate development keys
-- `setup-hooks.sh` - Git hooks setup
+### Setup Scripts
+- `setup-docker.sh` - Docker setup and configuration
+- `setup-pm2.sh` - PM2 setup and configuration
 
-## Backup Tools
+### Deployment Scripts
+- `deploy.sh` - Main deployment script
+- `rollback.sh` - Rollback deployment
+- `cleanup.sh` - Clean old deployments
 
-### Database Backup
-- `backup-db.sh` - MongoDB backup script
-- `restore-db.sh` - MongoDB restore script
-- `rotate-backups.sh` - Cleanup old backups
+### Monitoring Scripts
+- `monitor.sh` - System monitoring script
+- `check-health.sh` - Health check script
+- `view-logs.sh` - Log viewer script
 
-### System Backup
-- `backup-apps.sh` - Backup deployed applications
-- `backup-config.sh` - Backup system configuration
-- `backup-ssl.sh` - Backup SSL certificates
-
-## Maintenance Tools
-
-### System Maintenance
-- `check-disk.sh` - Disk space monitoring
-- `cleanup-logs.sh` - Log rotation
-- `update-ssl.sh` - SSL certificate renewal
-
-### Application Maintenance
-- `cleanup-apps.sh` - Remove unused applications
-- `check-ports.sh` - Port usage analysis
-- `monitor-resources.sh` - Resource usage check
+### Maintenance Scripts
+- `backup.sh` - Backup script
+- `restore.sh` - Restore script
+- `rotate-logs.sh` - Log rotation script
 
 ## Usage
 
-Most scripts require root privileges:
+Each script includes help information accessible via `-h` or `--help` flag:
 
 ```bash
-# System installation
-sudo ./tools/setup/install.sh
-
-# Create backup
-sudo ./tools/backup/backup-all.sh
-
-# Maintenance check
-sudo ./tools/maintenance/system-check.sh
+./script-name.sh --help
 ```
 
 ## Configuration
 
-Scripts read configuration from `/etc/noderoll/config`:
+Scripts read configuration from environment variables or `.env` file. Copy the example configuration:
 
-```env
-# Backup Configuration
-BACKUP_DIR=/var/backups/noderoll
-KEEP_BACKUPS=7
-COMPRESS_BACKUPS=true
-
-# MongoDB
-MONGO_HOST=localhost
-MONGO_PORT=27017
-MONGO_DB=noderoll
-
-# System
-LOG_DIR=/var/log/noderoll
-MAX_LOG_SIZE=100M
-ALERT_DISK_USAGE=85
+```bash
+cp .env.example .env
 ```
 
-## Security Notes
+## License
 
-- All scripts must be run as root
-- Backup files are encrypted
-- Sensitive data is handled securely
-- Logs contain execution history
+MIT

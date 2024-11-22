@@ -51,15 +51,18 @@ git clone https://github.com/NodeRoll/self-hosted-standalone.git
 # Enter the portal
 cd self-hosted-standalone
 
-# Power up
-npm install
-
-# Configure your realm
-cp .env.example .env
+# Setup everything (Node.js v14+ required)
+npm run setup
 
 # Launch! 🚀
 npm run dev
 ```
+
+## 💻 System Requirements
+
+- Node.js v14 or higher
+- 512MB RAM minimum (1GB recommended)
+- 1GB free disk space
 
 ## 📚 Documentation
 
@@ -80,12 +83,22 @@ npm run dev
 |----------|-------------|
 | **Backend** | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white) |
 | **Frontend** | ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) ![TailwindCSS](https://img.shields.io/badge/Tailwind-38B2AC?style=flat&logo=tailwind-css&logoColor=white) |
-| **Database** | ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat&logo=mongodb&logoColor=white) |
+| **Database** | ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat&logo=sqlite&logoColor=white) |
 | **Infrastructure** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white) ![Nginx](https://img.shields.io/badge/Nginx-009639?style=flat&logo=nginx&logoColor=white) |
 | **Authentication** | ![GitHub](https://img.shields.io/badge/GitHub_OAuth-181717?style=flat&logo=github&logoColor=white) |
 | **Monitoring** | ![Custom Solution](https://img.shields.io/badge/Custom_Monitoring-FF4F64?style=flat&logo=gauge&logoColor=white) |
 
 </div>
+
+## 🌟 Why SQLite?
+
+NodeRoll uses SQLite as its database because:
+
+- 📦 Zero-config: No separate database server needed
+- 🚀 Lightweight: Perfect for small to medium deployments
+- 💾 Single file: Easy backups and maintenance
+- 🔒 Reliable: ACID compliant, battle-tested
+- 🎯 Simple: No complex database administration
 
 ## 📝 License
 
@@ -98,15 +111,3 @@ We love contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md)
 ## 💫 Support
 
 If you like NodeRoll, give it a ⭐️ to show your support!
-
-## 📬 Contact
-
-For support, feedback, or inquiries, please [open an issue](https://github.com/NodeRoll/self-hosted-standalone/issues).
-
----
-
-<div align="center">
-
-🚀 Made with ❤️ for developers who love clean deployments
-
-</div>
