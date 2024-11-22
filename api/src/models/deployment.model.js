@@ -1,6 +1,28 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+const scalingRulesSchema = {
+    minInstances: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1
+    },
+    maxInstances: {
+        type: DataTypes.INTEGER,
+        defaultValue: 5
+    },
+    cooldownPeriod: {
+        type: DataTypes.INTEGER,
+        defaultValue: 300000 // 5 minutes in milliseconds
+    },
+    rules: {
+        type: DataTypes.JSON,
+        defaultValue: []
+    },
+    lastScalingAction: {
+        type: DataTypes.DATE
+    }
+};
+
 const Deployment = sequelize.define('Deployment', {
     id: {
         type: DataTypes.UUID,
@@ -54,7 +76,8 @@ const Deployment = sequelize.define('Deployment', {
     },
     completed_at: {
         type: DataTypes.DATE
-    }
+    },
+    ...scalingRulesSchema
 }, {
     timestamps: true,
     tableName: 'Deployments',

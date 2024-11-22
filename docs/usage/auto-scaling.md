@@ -1,10 +1,22 @@
-# Using Auto-Scaling in NodeRoll
+# Auto-Scaling in NodeRoll (Self-Hosted)
 
-This guide explains how to use NodeRoll's intelligent auto-scaling system to optimize your application's performance.
+This guide explains how to use NodeRoll's auto-scaling capabilities in the self-hosted standalone version.
 
 ## Overview
 
-NodeRoll's auto-scaling system monitors both system metrics and GitHub activity to automatically adjust your application's resources based on demand.
+NodeRoll monitors your system resources and GitHub repository traffic to help manage your application's performance on a single server.
+
+## How It Works
+
+1. **System Monitoring**:
+   - CPU usage (using 1-minute load average)
+   - Memory usage
+   - Automatic warnings when system resources are running high
+
+2. **GitHub Traffic**:
+   - Repository views monitoring
+   - Traffic-based scaling decisions
+   - Cooldown periods to prevent rapid scaling
 
 ## Setting Up Auto-Scaling
 
@@ -12,132 +24,66 @@ NodeRoll's auto-scaling system monitors both system metrics and GitHub activity 
 
 1. Navigate to your deployment's dashboard
 2. Click on "Auto-Scaling" in the sidebar
-3. Click "Configure Rules"
-4. Set your scaling parameters:
-   - Minimum instances
-   - Maximum instances
-   - Cooldown period
-   - Scaling rules
+3. Configure basic settings:
+   - Minimum instances (default: 1)
+   - Maximum instances (default: 5)
+   - Cooldown period (default: 5 minutes)
 
 ### Via API
 
 ```bash
-# Set scaling rules
-curl -X POST http://your-server/api/deployments/your-deployment-id/scaling-rules \
+# Set scaling configuration
+curl -X POST http://localhost:3000/api/deployments/your-deployment-id/scaling-rules \
   -H "Content-Type: application/json" \
   -d '{
     "minInstances": 1,
-    "maxInstances": 5,
-    "cooldownPeriod": 300000,
-    "metrics": [
-      {
-        "type": "cpu",
-        "threshold": 80,
-        "action": "scale-up"
-      }
-    ]
+    "maxInstances": 3,
+    "cooldownPeriod": 300000
   }'
 ```
 
-## Metric Types
+## Scaling Behavior
 
-### System Metrics
+### Scale Up Conditions
+- GitHub traffic load > 80%
+- Current instances < Maximum instances
+- Not in cooldown period
 
-- **CPU Usage**: Scales based on CPU utilization
-- **Memory Usage**: Scales based on memory consumption
-- **Disk Usage**: Scales based on disk space utilization
-- **Network Traffic**: Scales based on network load
+### Scale Down Conditions
+- GitHub traffic load < 20%
+- Current instances > Minimum instances
+- Not in cooldown period
 
-### GitHub Metrics
-
-- **Commit Frequency**: Scales based on repository activity
-- **Active Pull Requests**: Scales based on PR workload
-- **Active Issues**: Scales based on issue activity
-- **Traffic Load**: Scales based on repository views
+### System Warnings
+The system will issue warnings when:
+- CPU usage > 80%
+- Memory usage > 80%
 
 ## Best Practices
 
-### General Guidelines
+1. **Resource Planning**
+   - Monitor system warnings
+   - Upgrade server if you frequently see resource warnings
+   - Keep maximum instances reasonable for your server capacity
 
-1. **Start Conservative**
-   - Begin with wider thresholds
-   - Gradually tighten as you understand patterns
+2. **Cooldown Periods**
+   - Default: 5 minutes
+   - Adjust based on your application's startup time
+   - Avoid too short periods to prevent thrashing
 
-2. **Use Multiple Metrics**
-   - Combine system and GitHub metrics
-   - Create balanced scaling rules
+3. **Instance Limits**
+   - Set based on your server's capacity
+   - Consider memory usage per instance
+   - Leave room for system processes
 
-3. **Set Appropriate Cooldowns**
-   - Prevent scaling thrashing
-   - Default: 5 minutes (300000ms)
-
-### Example Configurations
-
-#### Development Environment
-```json
-{
-  "minInstances": 1,
-  "maxInstances": 3,
-  "cooldownPeriod": 300000,
-  "metrics": [
-    {
-      "type": "cpu",
-      "threshold": 80,
-      "action": "scale-up"
-    },
-    {
-      "type": "commit_frequency",
-      "threshold": 10,
-      "action": "scale-up"
-    }
-  ]
-}
-```
-
-#### Production Environment
-```json
-{
-  "minInstances": 2,
-  "maxInstances": 10,
-  "cooldownPeriod": 300000,
-  "metrics": [
-    {
-      "type": "cpu",
-      "threshold": 70,
-      "action": "scale-up"
-    },
-    {
-      "type": "memory",
-      "threshold": 80,
-      "action": "scale-up"
-    },
-    {
-      "type": "traffic_load",
-      "threshold": 100,
-      "action": "scale-up"
-    }
-  ]
-}
-```
-
-## Monitoring Auto-Scaling
-
-### Dashboard Metrics
-
-Monitor your auto-scaling activity through:
-- Scaling event history
-- Resource utilization graphs
-- GitHub activity correlation
-- Performance impact analysis
-
-### Logs
+## Monitoring
 
 Access auto-scaling logs:
 ```bash
 # View scaling events
 tail -f /var/log/noderoll/scaling.log
 
-# View detailed metrics
+# View system metrics
 tail -f /var/log/noderoll/metrics.log
 ```
 
@@ -145,23 +91,31 @@ tail -f /var/log/noderoll/metrics.log
 
 ### Common Issues
 
-1. **Frequent Scaling**
-   - Increase cooldown period
-   - Adjust thresholds
-   - Review metric combinations
+1. **High Resource Usage**
+   - Check system logs for warnings
+   - Consider upgrading server resources
+   - Optimize application code
 
-2. **Delayed Scaling**
-   - Decrease cooldown period
-   - Lower thresholds
-   - Check metric collection
+2. **Scaling Not Working**
+   - Verify GitHub token permissions
+   - Check cooldown period
+   - Ensure instances within min/max bounds
 
-3. **Resource Constraints**
-   - Verify server capacity
-   - Adjust maximum instances
-   - Review resource allocation
+3. **Performance Issues**
+   - Monitor application logs
+   - Check for memory leaks
+   - Optimize database queries
 
-### Getting Help
+## Limitations
 
-- Check the [API Documentation](../api/auto-scaling.md)
-- Join our [Discord Community](https://discord.gg/noderoll)
-- Open an [Issue](https://github.com/NodeRoll/self-hosted-standalone/issues)
+1. **Single Server**
+   - Designed for standalone deployments
+   - No cross-server orchestration
+   - Resource limits based on host machine
+
+2. **GitHub API**
+   - Rate limits apply
+   - Traffic data may have delays
+   - Some metrics require specific permissions
+
+Need help? Check our [community forum](https://github.com/noderoll/noderoll/discussions) or [open an issue](https://github.com/noderoll/noderoll/issues).

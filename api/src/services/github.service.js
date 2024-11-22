@@ -169,6 +169,42 @@ class GitHubService {
         return response.data;
     }
 
+    async _calculateTrafficLoad(accessToken, owner, repo) {
+        try {
+            // Get repository traffic data
+            const trafficData = await this.client.get(`/repos/${owner}/${repo}/traffic/views`, {
+                headers: {
+                    Authorization: `token ${accessToken}`
+                }
+            });
+
+            const views = trafficData.data.views || [];
+            const now = new Date();
+            const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+
+            // Calculate total views in the last 24 hours
+            const recentViews = views.filter(view => {
+                const viewDate = new Date(view.timestamp);
+                return viewDate >= oneDayAgo;
+            });
+
+            const totalViews = recentViews.reduce((sum, view) => sum + view.count, 0);
+            
+            // Calculate load score (0-100)
+            // Assuming 1000 views/day is high traffic (100% load)
+            const loadScore = Math.min(Math.round((totalViews / 1000) * 100), 100);
+
+            return {
+                totalViews,
+                loadScore,
+                timestamp: now.toISOString()
+            };
+        } catch (error) {
+            logger.error('Failed to calculate traffic load:', error);
+            throw new Error('Failed to calculate repository traffic load');
+        }
+    }
+
     _calculateCommitFrequency(commits) {
         // Calculate commits per hour over the last 24 hours
         const now = Date.now();
